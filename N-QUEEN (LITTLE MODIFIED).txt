@@ -1,0 +1,192 @@
+#include <GL/freeglut.h>
+#include <GL/glu.h>
+#include<stdio.h>
+
+char chessboard[100][100] = {};
+int queens;
+float W; float H;
+int savingposition[100][2] = { };
+
+void myinit(void)
+{
+    glClearColor(0, 0, 0, 0);
+}
+bool checking(int row, int column) 
+{
+    for (int i = 0; i < queens; i++) 
+    {
+        for (int j = 0; j < queens; j++) 
+        {
+            if ((j + i == column + row || column - row == j - i || i == row || j == column) && chessboard[i][j] == 'Q')
+            return false;
+        }
+    }
+return true;
+}
+void removeflag(int row)
+{
+    for (int i = 0; i < queens; i++)
+    {
+        chessboard[row][i] = '0';
+    }
+}
+void backtracking(void)
+{
+    for (int row = 0; row < queens; row++)
+    {
+        for (int column = 0; column < queens; column++) 
+        {
+        if (checking(row, column) && chessboard[row][column] != '-') 
+            {
+                chessboard[row][column] = 'Q'; removeflag(row + 1);
+                savingposition[row][0] = row;
+                savingposition[row][1] = column;
+                row++; column = -1;
+                if (row == queens) break;
+            }
+            else if (column == queens - 1 && chessboard[row][column] != 'Q')
+            {
+                row--;
+                column = savingposition[row][1];
+                printf("%d%d",&row,&column);
+                chessboard[row][column] = '-';
+                column = 0;
+           }
+        }
+    }
+}
+void displaytable(void)
+{
+    for (int i = 0; i < queens; i++)
+    {
+        for (int j = 0; j < queens; j++) 
+        {
+            if (chessboard[i][j] != 'Q')
+                printf(".");
+            else
+                printf("%c",&chessboard[i][j]);
+        }
+    }
+}
+void displayboard()
+{
+    glTranslatef(25, H - 25, 0.0);
+    glPushMatrix();
+    for (int i = 0; i < queens; i++)
+    {
+        glPushMatrix();
+        for (int j = 0; j < queens; j++)
+        {
+            if ((i + j) % 2 == 0) 
+                    glColor3f(1, 1, 1); 
+            else 
+                glColor3f(0, 0,0);
+            glPushMatrix();
+            glScalef(50.0, 50.0, 0.0);
+            glutSolidCube(1);
+            if (chessboard[i][j] == 'Q') 
+            {
+                glPushMatrix();
+                glColor3f(0, 0, 1);
+                glutSolidSphere(0.4, 50, 50); 
+                glPopMatrix();
+            }
+            glPopMatrix();
+            glTranslatef(50.0, 0.0, 0.0);
+        }
+        glPopMatrix();
+        glTranslatef(0.0, -50.0, 0.0);
+    }
+    glPopMatrix();
+}
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+    glPushMatrix();
+    displayboard();
+    glPopMatrix();
+    displaytable();
+    glutSwapBuffers();
+}
+void reshape(int w, int h)
+{
+    glViewport(0, 0, (GLsizei)w, (GLsizei)h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0, W, 0, H);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();//important: last line must be glLoadIdentity() for coloring with openGL
+//glTranslatef (.0, .0, -5.); //do not translate at all if glLoadIdentity() is used
+}
+void mouse(int button, int state, int x, int y) //mouse function...
+{
+    int row, column;
+    switch (button) 
+    {
+    case GLUT_LEFT_BUTTON:
+        if (state == GLUT_DOWN)
+        {
+            row = (y / 50);
+            column = (x / 50);
+            if (checking(row, column))
+                chessboard[row][column] = 'Q';
+        }
+        printf("X ", x);
+        printf("Y ", y);
+        glutPostRedisplay();
+        break;
+        case GLUT_RIGHT_BUTTON:
+            if (state == GLUT_DOWN)
+            {
+             row = (y / 50);
+             column = (x / 50);
+                chessboard[row][column] = ' ';
+            }
+        printf("X ",x);
+        printf("Y ", y);
+        glutPostRedisplay();
+        break;
+    }
+}
+void main(int argc, char** argv)
+{
+    int input;
+    printf("WELCOME TO N-QUEEN PROBLEM !!!!\n");
+    printf("1. Show The Solution by Computer!!\n");
+    printf("2. Try to solve the puzzle\n");
+    printf("3. Exit!!!\n");
+    printf("Select the NUMBER from 1 - 3 :\n");
+    scanf_s("%d", &input);
+    switch (input)
+    {
+    case 1:
+        printf("Please enter the number of the queens 1 to 100:\n");
+        scanf_s("%d", &queens);
+        backtracking();
+        break;
+    case 2:
+        printf("What size of N queens do you want to play ?\n");
+        scanf_s("%d", &queens);
+        printf("Left Cick on the box to select!!\n Right click to deselect \n");
+       break;
+    case 3:
+        printf("THANK YOU FOR PLAYING\n");
+        break;
+    default:
+        printf("WRONG INPUT\n");
+        break;
+    }
+    W = 50 * queens;
+    H = 50 * queens;
+
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitWindowSize(W, H);
+    glutInitWindowPosition(100,100);
+    glutCreateWindow("N-QUEEN PROBLEM");
+    myinit();
+    glutDisplayFunc(display);
+    glutMouseFunc(mouse);
+    glutReshapeFunc(reshape);
+    glutMainLoop();
+ }
